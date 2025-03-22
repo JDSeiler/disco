@@ -1,3 +1,6 @@
+use std::num::ParseIntError;
+use clap::{Arg, ArgAction, Command};
+use clap::builder::ValueParser;
 use rand::distr::{Distribution, slice::Choose};
 use rand::seq::{IndexedRandom, IteratorRandom};
 
@@ -40,12 +43,14 @@ fn random_separator() -> String {
     String::from(*c)
 }
 
+fn parse_usize(env: &str) -> Result<usize, ParseIntError> {
+    env.parse::<usize>()
+}
+
 fn generate_password(num_chunks: usize, chunk_size: usize) -> Option<String> {
     let chunks: Vec<String> = (0..num_chunks).map(|_| generate_chunk(chunk_size)).collect();
     let separators: Vec<String> = (0..num_chunks-1).map(|_| random_separator()).collect();
 
-    println!("{:?}", chunks);
-    println!("{:?}", separators);
     let total_size = chunks.len() + separators.len();
 
     let mut pw: Vec<String> = Vec::with_capacity(total_size);
@@ -60,6 +65,35 @@ fn generate_password(num_chunks: usize, chunk_size: usize) -> Option<String> {
 }
 
 fn main() {
-    let pw = generate_password(5, 3);
-    println!("{:?}", pw);
+    let matches = Command::new("Disco")
+        .author("JDSeiler")
+        .version("0.1.0")
+        .about("Generates passwords in an easy to read chunked format, inspired by 1Password")
+        .arg(
+            Arg::new("num_chunks")
+                .long("chunks")
+                .short('c')
+                .value_parser(ValueParser::new(parse_usize))
+                .default_value("5")
+                .action(ArgAction::Set)
+                .help("Number of chunks to generate")
+        )
+        .arg(
+            Arg::new("chunk_size")
+                .long("chunk-size")
+                .short('s')
+                .value_parser(ValueParser::new(parse_usize))
+                .default_value("3")
+                .action(ArgAction::Set)
+                .help("Number of characters per chunk")
+        ).get_matches();
+
+    let num_chunks = *matches.get_one::<usize>("num_chunks").unwrap();
+    let chunk_size = *matches.get_one::<usize>("chunk_size").unwrap();
+
+    if let Some(pw) = generate_password(num_chunks, chunk_size) {
+        println!("{}", pw);
+    } else {
+        println!("Failed to generate password! This is a bug!")
+    }
 }
