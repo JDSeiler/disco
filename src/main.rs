@@ -60,6 +60,6 @@ fn generate_password(num_chunks: usize, chunk_size: usize) -> Option<String> {
 }
 
 fn main() {
-    let pw = generate_password(4, 5);
+    let pw = generate_password(5, 3);
     println!("{:?}", pw);
 }
