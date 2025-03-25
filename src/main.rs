@@ -1,18 +1,20 @@
 use std::num::ParseIntError;
 use clap::{Arg, ArgAction, Command};
 use clap::builder::ValueParser;
-use rand::distr::{Distribution, slice::Choose};
-use rand::seq::{IndexedRandom, IteratorRandom};
+use rand::distr::{Distribution, slice::Choose, Uniform};
+use rand::Rng;
+use rand::seq::{IndexedRandom};
 
 fn generate_chunk(length: usize) -> String {
     let mut rng = rand::rng();
-    let lowers = 'a'..='z';
-    let uppers = 'A'..='Z';
+    let lowers: Vec<char> = ('a'..='z').collect();
+    let uppers: Vec<char> = ('A'..='Z').collect();
 
     // this feels gross
     [lowers, uppers].choose(&mut rng).map(|pool| {
-        let selected_chars = pool.clone().choose_multiple(&mut rng, length);
-        selected_chars.iter().collect::<String>()
+        let pool_indices = Uniform::new(0, pool.len()).unwrap();
+        let selected_indices: Vec<usize> = (&mut rng).sample_iter(pool_indices).take(length).collect();
+        selected_indices.iter().map(|i| pool[*i]).collect::<String>()
     }).unwrap()
 }
 
